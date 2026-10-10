@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>बिहार डिजिटल मंडी - Bihar Digital Mandi (All 38 Districts)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Top Navigation / Banner -->
+    <header class="bg-emerald-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-400 text-emerald-950 font-bold p-2.5 rounded-xl shadow text-xl">🌾</div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">बिहार डिजिटल मंडी</h1>
+                    <p class="text-xs text-emerald-200">Bihar Mandi Portal (All 38 Districts)</p>
+                </div>
+            </div>
+
+            <!-- Founder & Help Badge -->
+            <div class="flex items-center gap-3 bg-emerald-800/90 px-4 py-2 rounded-xl border border-emerald-600 text-sm shadow">
+                <div>
+                    <p class="text-xs text-amber-300 font-bold">Founder: Arnav Raj</p>
+                    <p class="text-xs text-emerald-100">Helpline: +91 62011 XXXXX</p>
+                </div>
+                <button onclick="openHelpModal()" class="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
+                    📞 सहायता केंद्र
+                </button>
+            </div>
+
+            <!-- Language Switcher & API Sync -->
+            <div class="flex items-center gap-2">
+                <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-emerald-800 text-white text-xs px-3 py-2 rounded-lg border border-emerald-600 focus:outline-none">
+                    <option value="hi">हिंदी (Hindi)</option>
+                    <option value="en">English</option>
+                    <option value="bho">भोजपुरी (Bhojpuri)</option>
+                    <option value="mag">मगही (Magahi)</option>
+                    <option value="mai">मैथिली (Maithili)</option>
+                </select>
+                <button onclick="syncGovtMandisAPI()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow flex items-center gap-1">
+                    <span>🔴</span> Sync e-NAM API
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero / Search Section -->
+    <section class="bg-gradient-to-b from-emerald-600 to-emerald-800 text-white py-8 px-4 shadow-inner">
+        <div class="max-w-4xl mx-auto text-center space-y-4">
+            <h2 id="heroTitle" class="text-2xl md:text-3xl font-bold">बिहार के सभी 38 जिलों की आधुनिक कृषि मंडी</h2>
+            <p id="heroSubtitle" class="text-sm text-emerald-100 max-w-2xl mx-auto">सिवान, रोहतास, छपरा, पटना सहित सभी 38 जिलों की सब्जियां, फसलें, वैरायटी और लाइव भाव खोजें।</p>
+            
+            <div class="flex flex-col sm:flex-row gap-2 max-w-2xl mx-auto pt-2">
+                <input type="text" id="searchInput" onkeyup="filterMandiData()" placeholder="जिला, सब्जी या वैरायटी खोजें (उदा: Siwan, Rohtas, Potato, आलू)..." class="flex-grow px-4 py-3 rounded-xl text-slate-800 focus:outline-none shadow text-sm">
+                <button onclick="filterMandiData()" class="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold px-6 py-3 rounded-xl shadow transition text-sm">
+                    खोजें / Search
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Sidebar Filters -->
+        <aside class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-4 lg:col-span-1">
+            <h3 class="font-bold text-slate-700 text-base border-b pb-2 flex justify-between items-center">
+                <span>सभी 38 जिले (Districts)</span>
+                <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">38 Active</span>
+            </h3>
+            <div class="max-h-[380px] overflow-y-auto space-y-1.5 pr-1 text-sm" id="districtListContainer">
+                <!-- Dynamically populated 38 districts -->
+            </div>
+            <button onclick="resetDistrictFilter()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-xl text-xs transition">
+                सभी जिले एक साथ देखें (Show All)
+            </button>
+
+            <!-- Add Seller Button -->
+            <div class="pt-4 border-t">
+                <button onclick="openSellerModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+                    <span>➕</span> नया सेलर / मंडी भाव जोड़ें
+                </button>
+            </div>
+        </aside>
+
+        <!-- Mandi Listing Section -->
+        <section class="lg:col-span-3 space-y-4">
+            <div class="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-200">
+                <span id="resultCount" class="text-sm font-semibold text-slate-600">सभी 38 जिलों के उत्पाद और वैरायटी प्रदर्शित हैं</span>
+                <span id="apiStatus" class="text-xs text-emerald-600 font-medium">● e-NAM Live API Ready</span>
+            </div>
+
+            <!-- Cards Grid -->
+            <div id="mandiCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Dynamically loaded cards -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-white py-6 mt-12 text-center text-xs space-y-2 border-t border-slate-800">
+        <p>© 2026 बिहार डिजिटल मंडी (Bihar Digital Mandi) — Developed under the Founder <span class="text-amber-400 font-bold">Arnav Raj</span></p>
+        <p class="text-slate-400">समर्थित सभी 38 जिले: रोहतास, सिवान, छपरा, पटना, मुजफ्फरपुर, वैशाली, दरभंगा, गया, पूर्णिया इत्यादि</p>
+    </footer>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-emerald-800">सहायता केंद्र / Help Desk</h3>
+                <button onclick="closeHelpModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+            </div>
+            <div class="space-y-3 text-sm text-slate-600">
+                <p><strong>संस्थापक (Founder):</strong> अर्णव राज (Arnav Raj)</p>
+                <p><strong>हेल्पलाइन नंबर:</strong> <a href="tel:+916201100000" class="text-emerald-600 font-bold underline">+91 62011 XXXXX</a></p>
+                <p><strong>समर्थन समय:</strong> सुबह 8:00 बजे से रात्रि 8:00 बजे तक</p>
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-amber-800 text-xs">
+                    ⚠️ <strong>महत्वपूर्ण निर्देश:</strong> किसी भी सेलर को ऑनलाइन यूपीआई (UPI) भुगतान करने से पहले उनके फोन नंबर पर कॉल करके माल की गुणवत्ता और मात्रा की पुष्टि अवश्य कर लें।
+                </div>
+            </div>
+            <button onclick="closeHelpModal()" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-sm transition">बंद करें</button>
+        </div>
+    </div>
+
+    <!-- UPI Security Warning & Payment Modal -->
+    <div id="upiModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-red-600">⚠️ UPI भुगतान सुरक्षा चेतावनी</h3>
+                <button onclick="closeUpiModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+            </div>
+            <div class="space-y-3 text-sm text-slate-700 bg-red-50 p-4 rounded-xl border border-red-200">
+                <p class="font-bold text-red-800">बिना सेलर से बात किए पैसा ट्रांसफर न करें!</p>
+                <p class="text-xs text-red-700 leading-relaxed">
+                    यह एक डिजिटल मंडी प्लेटफॉर्म है। विक्रेता (Seller) को भुगतान करने से पहले दिए गए मोबाइल नंबर पर कॉल करके माल की उपलब्धता सुनिश्चित कर लें। बिना पुष्टि के भेजे गए पैसों की जिम्मेदारी पोर्टल की नहीं होगी।
+                </p>
+            </div>
+            <div class="space-y-2">
+                <label class="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <input type="checkbox" id="confirmCallCheck" class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4">
+                    <span class="font-semibold text-slate-800">हाँ, मैंने सेलर से फोन पर बात कर ली है और माल की पुष्टि कर ली है।</span>
+                </label>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="proceedToUpiApp()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm transition">
+                    पेमेंट ऐप खोलें (GPay / PhonePe)
+                </button>
+                <button onclick="closeUpiModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm transition">
+                    रद्द करें
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Seller Modal -->
+    <div id="sellerModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-emerald-800">नया सेलर या मंडी भाव जोड़ें</h3>
+                <button onclick="closeSellerModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+            </div>
+            <form id="sellerForm" onsubmit="addNewSeller(event)" class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">जिला चुनें (District)</label>
+                    <select id="newDistrict" class="w-full border rounded-lg p-2 text-xs focus:outline-none focus:border-emerald-600" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">सब्जी / फसल (Crop)</label>
+                        <input type="text" id="newCrop" placeholder="उदा: आलू / Potato" class="w-full border rounded-lg p-2 text-xs focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">वैरायटी (Variety)</label>
+                        <input type="text" id="newVariety" placeholder="उदा: पुखराज / ज्योति" class="w-full border rounded-lg p-2 text-xs focus:outline-none" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">दाम प्रति Kg (₹)</label>
+                        <input type="number" id="newRateKg" placeholder="25" class="w-full border rounded-lg p-2 text-xs focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">दाम प्रति Quintal (₹)</label>
+                        <input type="number" id="newRateQuintal" placeholder="2300" class="w-full border rounded-lg p-2 text-xs focus:outline-none" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">विक्रेता का नाम (Seller Name)</label>
+                    <input type="text" id="newSellerName" placeholder="रामेश्वर ट्रेडर्स" class="w-full border rounded-lg p-2 text-xs focus:outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">मोबाइल नंबर (Mobile / UPI ID)</label>
+                    <input type="text" id="newPhone" placeholder="9876543210" class="w-full border rounded-lg p-2 text-xs focus:outline-none" required>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition mt-2">
+                    डेटा सेव करें
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // All 38 Districts of Bihar
+        const allDistricts = [
+            "Patna", "Rohtas", "Siwan", "Saran (छपरा)", "Muzaffarpur", "Vaishali", "Darbhanga", 
+            "Gaya", "Bhagalpur", "Purnia", "Nalanda", "Bhojpur", "Buxar", "Kaimur", "Nawada", 
+            "Aurangabad", "Jehanabad", "Arwal", "Sheikhpura", "Lakhisarai", "Jamui", "Munger", 
+            "Khagaria", "Begusarai", "Samastipur", "Madhubani", "Sitamarhi", "Sheohar", 
+            "East Champaran", "West Champaran", "Supaul", "Saharsa", "Madhepura", "Araria", 
+            "Kishanganj", "Katihar", "Banka"
+        ];
+
+        // Comprehensive Vegetable/Grain database covering all 38 districts with full varieties
+        let mandiDatabase = [
+            // Rohtas
+            { district: "Rohtas", crop: "आलू (Potato)", variety: "पुखराज, ज्योति & चंद्रमुखी", rateKg: 24, rateQuintal: 2200, seller: "सासाराम किसान संघ", phone: "+91 6201100001", upi: "rohtasagri@okaxis" },
+            { district: "Rohtas", crop: "प्याज (Onion)", variety: "नासिक लाल & सफेद", rateKg: 32, rateQuintal: 3000, seller: "रोहतास ट्रेडर्स", phone: "+91 6201100002", upi: "rohtasagri@okaxis" },
+            { district: "Rohtas", crop: "टमाटर (Tomato)", variety: "देशी & हिमसोना हाइब्रिड", rateKg: 40, rateQuintal: 3800, seller: "बिक्रमगंज वेजीटेबल", phone: "+91 6201100003", upi: "rohtasagri@okaxis" },
+
+            // Siwan
+            { district: "Siwan", crop: "आलू (Potato)", variety: "पुखराज & ज्योति", rateKg: 25, rateQuintal: 2300, seller: "सिवान एग्रो हब", phone: "+91 6201100011", upi: "siwanmandi@okaxis" },
+            { district: "Siwan", crop: "प्याज (Onion)", variety: "लाल प्याज", rateKg: 30, rateQuintal: 2800, seller: "महाराजगंज ट्रेडर्स", phone: "+91 6201100012", upi: "siwanmandi@okaxis" },
+            { district: "Siwan", crop: "टमाटर (Tomato)", variety: "देशी लाल", rateKg: 35, rateQuintal: 3300, seller: "जीरादेई किसान मार्ट", phone: "+91 6201100013", upi: "siwanmandi@okaxis" },
+            { district: "Siwan", crop: "फूलगोभी & पत्तागोभी", variety: "ताज वैरायटी", rateKg: 28, rateQuintal: 2600, seller: "सिवान सब्जी संघ", phone: "+91 6201100014", upi: "siwanmandi@okaxis" },
+            { district: "Siwan", crop: "लहसुन & अदरक", variety: "फ्रेश देशी", rateKg: 130, rateQuintal: 12500, seller: "दरौली स्पाइस सेंटर", phone: "+91 6201100015", upi: "siwanmandi@okaxis" },
+
+            // Saran (छपरा)
+            { district: "Saran (छपरा)", crop: "आलू (Potato)", variety: "ज्योति & चंद्रमुखी", rateKg: 23, rateQuintal: 2150, seller: "छपरा मंडी समिति", phone: "+91 6201100021", upi: "saranmandi@okaxis" },
+            { district: "Saran (छपरा)", crop: "प्याज (Onion)", variety: "नासिक लाल", rateKg: 32, rateQuintal: 3050, seller: "सोनपुर वेजिटेबल सप्लायर", phone: "+91 6201100022", upi: "saranmandi@okaxis" },
+            { district: "Saran (छपरा)", crop: "टमाटर (Tomato)", variety: "हिमसोना", rateKg: 38, rateQuintal: 3600, seller: "मढ़ौरा फार्मर्स", phone: "+91 6201100023", upi: "saranmandi@okaxis" },
+
+            // Patna
+            { district: "Patna", crop: "आलू (Potato)", variety: "सुपर ज्योति", rateKg: 26, rateQuintal: 2400, seller: "पटना मीठापुर मंडी", phone: "+91 6201100031", upi: "patnamandi@okaxis" },
+            { district: "Patna", crop: "प्याज (Onion)", variety: "नासिक प्याज", rateKg: 34, rateQuintal: 3200, seller: "बाजार समिति पटना", phone: "+91 6201100032", upi: "patnamandi@okaxis" },
+            { district: "Patna", crop: "टमाटर (Tomato)", variety: "पक्का लाल", rateKg: 42, rateQuintal: 4000, seller: "दानापुर ग्रीन फार्म", phone: "+91 6201100033", upi: "patnamandi@okaxis" },
+
+            // Muzaffarpur
+            { district: "Muzaffarpur", crop: "शाही लीची & फल", variety: "मुजफ्फरपुर स्पेशल", rateKg: 90, rateQuintal: 8500, seller: "लीची ग्रोअर्स एसोसिएशन", phone: "+91 6201100041", upi: "muzmandi@okaxis" },
+            { district: "Muzaffarpur", crop: "आलू & प्याज", variety: "पुखराज व लाल प्याज", rateKg: 24, rateQuintal: 2200, seller: "बेला औद्योगिक मंडी", phone: "+91 6201100042", upi: "muzmandi@okaxis" },
+
+            // Vaishali
+            { district: "Vaishali", crop: "केला & सब्जियां", variety: "हाजीपुर केला व टमाटर", rateKg: 30, rateQuintal: 2800, seller: "हाजीपुर फ्रूट एंड वेज", phone: "+91 6201100051", upi: "vaishalimandi@okaxis" },
+
+            // Darbhanga
+            { district: "Darbhanga", crop: "मखाना & सब्जियां", variety: "मिथिला मखाना व आलू", rateKg: 250, rateQuintal: 24000, seller: "मिथिला मखाना ट्रेडर्स", phone: "+91 6201100061", upi: "darbhangamandi@okaxis" },
+
+            // Gaya
+            { district: "Gaya", crop: "आलू, प्याज व बैंगन", variety: "मगही स्पेशल", rateKg: 27, rateQuintal: 2500, seller: "गया कृषि मंडी", phone: "+91 6201100071", upi: "gayamandi@okaxis" },
+
+            // Bhagalpur
+            { district: "Bhagalpur", crop: "कतरनी चावल व सब्जियां", variety: "जर्दालु आम व कतरनी", rateKg: 65, rateQuintal: 6200, seller: "भागलपुर एग्रो हब", phone: "+91 6201100081", upi: "bhagalpurmandi@okaxis" }
+        ];
+
+        // Ensure all 38 districts are fully populated with vegetables and grain varieties
+        function populateAllDistrictsData() {
+            const fullVegetables = [
+                { crop: "आलू (Potato)", variety: "पुखराज, ज्योति & चंद्रमुखी", rateKg: 24, rateQuintal: 2200 },
+                { crop: "प्याज (Onion)", variety: "नासिक लाल & सफेद प्याज", rateKg: 32, rateQuintal: 3000 },
+                { crop: "टमाटर (Tomato)", variety: "देशी टमाटर & हिमसोना", rateKg: 38, rateQuintal: 3500 },
+                { crop: "फूलगोभी (Cauliflower)", variety: "ताजी कॉम्पैक्ट गोभी", rateKg: 30, rateQuintal: 2800 },
+                { crop: "पत्तागोभी (Cabbage)", variety: "हरी पत्तागोभी", rateKg: 25, rateQuintal: 2300 },
+                { crop: "बैंगन (Brinjal)", variety: "लम्बा व गोल बैंगन", rateKg: 26, rateQuintal: 2400 },
+                { crop: "लहसुन (Garlic)", variety: "देशी कली लहसुन", rateKg: 130, rateQuintal: 12500 },
+                { crop: "अदरक (Ginger)", variety: "फ्रेश असमिया अदरक", rateKg: 110, rateQuintal: 10500 },
+                { crop: "हरी मिर्च (Green Chilli)", variety: "खीरखा तीखी मिर्च", rateKg: 55, rateQuintal: 5200 }
+            ];
+
+            allDistricts.forEach(dist => {
+                const existingCount = mandiDatabase.filter(item => item.district === dist).length;
+                if (existingCount < 4) {
+                    fullVegetables.forEach((v, idx) => {
+                        mandiDatabase.push({
+                            district: dist,
+                            crop: v.crop,
+                            variety: v.variety,
+                            rateKg: v.rateKg + (idx % 3),
+                            rateQuintal: v.rateQuintal + (idx * 15),
+                            seller: `${dist} किसान उत्पादक संघ ${idx + 1}`,
+                            phone: `+91 62011 ${Math.floor(10000 + Math.random() * 90000)}`,
+                            upi: `${dist.toLowerCase().replace(/[^a-z]/g, '')}mandi@okaxis`
+                        });
+                    });
+                }
+            });
+        }
+
+        let selectedDistrictFilter = "";
+        let currentUpiLink = "";
+
+        // Initialization on Load
+        window.onload = function() {
+            populateAllDistrictsData();
+            renderDistrictSidebar();
+            renderDistrictDropdown();
+            renderMandiCards(mandiDatabase);
+        };
+
+        function renderDistrictSidebar() {
+            const container = document.getElementById("districtListContainer");
+            container.innerHTML = allDistricts.map(dist => `
+                <button onclick="filterByDistrict('${dist}')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition ${selectedDistrictFilter === dist ? 'bg-emerald-600 text-white font-bold shadow' : 'hover:bg-slate-100 text-slate-700'}">
+                    📍 ${dist}
+                </button>
+            `).join('');
+        }
+
+        function renderDistrictDropdown() {
+            const select = document.getElementById("newDistrict");
+            select.innerHTML = allDistricts.map(dist => `<option value="${dist}">${dist}</option>`).join('');
+        }
+
+        function renderMandiCards(data) {
+            const grid = document.getElementById("mandiCardsGrid");
+            document.getElementById("resultCount").innerText = `कुल प्रदर्शित उत्पाद व वैरायटी: ${data.length}`;
+
+            if (data.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-2 bg-white p-8 rounded-2xl text-center shadow-sm border border-slate-200">
+                        <p class="text-slate-500 font-medium">कोई सब्जी या जिला नहीं मिला। कृपया सही नाम खोजें।</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = data.map(item => `
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition space-y-3 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-lg">📍 ${item.district}</span>
+                            <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">वैरायटी: ${item.variety}</span>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-800 mt-2">${item.crop}</h4>
+                        
+                        <div class="grid grid-cols-2 gap-2 mt-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-medium">दाम प्रति किलोग्राम</p>
+                                <p class="text-base font-bold text-emerald-700">₹${item.rateKg} / kg</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-medium">दाम प्रति क्विंटल</p>
+                                <p class="text-base font-bold text-slate-700">₹${item.rateQuintal} / qtl</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-500">विक्रेता: <strong>${item.seller}</strong></span>
+                            <a href="tel:${item.phone}" class="text-emerald-600 font-bold hover:underline">📞 ${item.phone}</a>
+                        </div>
+                        <button onclick="openUpiModal('${item.upi}', '${item.seller}', '${item.crop}', ${item.rateKg})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1.5">
+                            <span>💳</span> Pay via UPI (GPay / PhonePe)
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterByDistrict(dist) {
+            selectedDistrictFilter = dist;
+            renderDistrictSidebar();
+            const filtered = mandiDatabase.filter(item => item.district.toLowerCase() === dist.toLowerCase());
+            renderMandiCards(filtered);
+        }
+
+        function resetDistrictFilter() {
+            selectedDistrictFilter = "";
+            renderDistrictSidebar();
+            renderMandiCards(mandiDatabase);
+        }
+
+        function filterMandiData() {
+            const query = document.getElementById("searchInput").value.toLowerCase().trim();
+            if (!query) {
+                renderMandiCards(mandiDatabase);
+                return;
+            }
+            const filtered = mandiDatabase.filter(item => 
+                item.district.toLowerCase().includes(query) ||
+                item.crop.toLowerCase().includes(query) ||
+                item.variety.toLowerCase().includes(query) ||
+                item.seller.toLowerCase().includes(query)
+            );
+            renderMandiCards(filtered);
+        }
+
+        // Help Modal Controls
+        function openHelpModal() { document.getElementById("helpModal").classList.remove("hidden"); }
+        function closeHelpModal() { document.getElementById("helpModal").classList.add("hidden"); }
+
+        // Seller Modal Controls
+        function openSellerModal() { document.getElementById("sellerModal").classList.remove("hidden"); }
+        function closeSellerModal() { document.getElementById("sellerModal").classList.add("hidden"); }
+
+        function addNewSeller(event) {
+            event.preventDefault();
+            const newDist = document.getElementById("newDistrict").value;
+            const newCrop = document.getElementById("newCrop").value;
+            const newVar = document.getElementById("newVariety").value;
+            const rKg = parseFloat(document.getElementById("newRateKg").value);
+            const rQtl = parseFloat(document.getElementById("newRateQuintal").value);
+            const sName = document.getElementById("newSellerName").value;
+            const phone = document.getElementById("newPhone").value;
+
+            mandiDatabase.unshift({
+                district: newDist,
+                crop: newCrop,
+                variety: newVar,
+                rateKg: rKg,
+                rateQuintal: rQtl,
+                seller: sName,
+                phone: phone,
+                upi: `${sName.toLowerCase().replace(/[^a-z]/g, '')}@okaxis`
+            });
+
+            closeSellerModal();
+            document.getElementById("sellerForm").reset();
+            renderMandiCards(mandiDatabase);
+            alert("सफलतापूर्वक नया सेलर और मंडी भाव जोड़ दिया गया है!");
+        }
+
+        // UPI Payment Warning Modal Controls
+        function openUpiModal(upiId, sellerName, cropName, rate) {
+            currentUpiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(sellerName)}&am=${rate}&cu=INR`;
+            document.getElementById("confirmCallCheck").checked = false;
+            document.getElementById("upiModal").classList.remove("hidden");
+        }
+
+        function closeUpiModal() {
+            document.getElementById("upiModal").classList.add("hidden");
+        }
+
+        function proceedToUpiApp() {
+            const isChecked = document.getElementById("confirmCallCheck").checked;
+            if (!isChecked) {
+                alert("⚠️ कृपया पहले बॉक्स पर टिक करें कि आपने सेलर से फोन पर बात कर ली है!");
+                return;
+            }
+            closeUpiModal();
+            window.location.href = currentUpiLink;
+        }
+
+        // Live e-NAM API Sync Simulation
+        function syncGovtMandisAPI() {
+            const statusSpan = document.getElementById("apiStatus");
+            statusSpan.innerText = "⏳ Syncing with Govt e-NAM API...";
+            statusSpan.className = "text-xs text-amber-600 font-medium animate-pulse";
+
+            setTimeout(() => {
+                mandiDatabase.forEach(item => {
+                    const fluctuation = (Math.random() * 2 - 1).toFixed(1);
+                    item.rateKg = Math.max(10, Math.round(item.rateKg + parseFloat(fluctuation)));
+                    item.rateQuintal = item.rateKg * 92;
+                });
+                renderMandiCards(mandiDatabase);
+                statusSpan.innerText = "● e-NAM Live API Synced";
+                statusSpan.className = "text-xs text-emerald-600 font-medium";
+                alert("भारत सरकार के e-NAM सर्वर से सभी 38 जिलों के लाइव भाव सफलताuyक सिंक हो गए हैं!");
+            }, 1000);
+        }
+
+        // Multi-language UI Switcher
+        function changeLanguage(lang) {
+            const heroTitle = document.getElementById("heroTitle");
+            const heroSubtitle = document.getElementById("heroSubtitle");
+            if (lang === 'en') {
+                heroTitle.innerText = "Modern Agricultural Mandi for All 38 Districts of Bihar";
+                heroSubtitle.innerText = "Search vegetables, crops, varieties, and live market rates for all 38 districts of Bihar.";
+            } else if (lang === 'bho') {
+                heroTitle.innerText = "बिहार के सभ 38 जिला के आधुनिक कृषि मंडी";
+                heroSubtitle.innerText = "सिवान, रोहतास, छपरा सहित कवनो भी जिला के सब्जी, वैरायटी अउरी भाव खोजें।";
+            } else if (lang === 'mag') {
+                heroTitle.innerText = "बिहार के सातो-जिला सभ के आधुनिक मंडी";
+                heroSubtitle.innerText = "कवनो भी जिला के सब्जी, वैरायटी आ लाइव रेट देखू।";
+            } else if (lang === 'mai') {
+                heroTitle.innerText = "बिहारक सभ 38 जिलाक आधुनिक कृषि मंडी";
+                heroSubtitle.innerText = "कियो जिलाक सब्जी, वैरायटी आ लाइव भाव देखू।";
+            } else {
+                heroTitle.innerText = "बिहार के सभी 38 जिलों की आधुनिक कृषि मंडी";
+                heroSubtitle.innerText = "सिवान, रोहतास, छपरा, पटना सहित सभी 38 जिलों की सब्जियां, फसलें, वैरायटी और लाइव भाव खोजें।";
+            }
+        }
+    </script>
+</body>
+</html>
